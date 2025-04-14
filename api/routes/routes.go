@@ -20,6 +20,7 @@ func SetupRoutes(router *gin.Engine) {
 
 		// 图片生成路由
 		api.POST("/generate-image", controllers.GenerateImage)
+		api.GET("/getTaskInfo", controllers.GetTaskInfo)
 
 		// 图片上传路由
 		api.POST("/uploadImg", controllers.UploadImage)
