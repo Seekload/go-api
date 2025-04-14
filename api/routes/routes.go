@@ -21,6 +21,9 @@ func SetupRoutes(router *gin.Engine) {
 		// 图片生成路由
 		api.POST("/generate-image", controllers.GenerateImage)
 
+		// 图片上传路由
+		api.POST("/uploadImg", controllers.UploadImage)
+
 		// 可以在这里添加更多路由组
 		// v1 := api.Group("/v1")
 		// {
