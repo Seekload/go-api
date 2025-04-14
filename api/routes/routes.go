@@ -18,6 +18,9 @@ func SetupRoutes(router *gin.Engine) {
 		api.GET("/hello", controllers.Hello)
 		api.GET("/ping", controllers.Ping)
 
+		// 图片生成路由
+		api.POST("/generate-image", controllers.GenerateImage)
+
 		// 可以在这里添加更多路由组
 		// v1 := api.Group("/v1")
 		// {
