@@ -2,12 +2,14 @@ package controllers
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -195,9 +197,10 @@ func RemoveBackground(c *gin.Context) {
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"success":  true,
-			"message":  "背景移除成功",
-			"imageUrl": resultURL,
+			"success":   true,
+			"message":   "背景移除成功",
+			"imageData": resultURL,  // base64 data URL 格式
+			"format":    "data_url", // 说明返回格式
 		})
 		return
 	}
@@ -223,9 +226,10 @@ func RemoveBackground(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success":  true,
-		"message":  "背景移除成功",
-		"imageUrl": resultURL,
+		"success":   true,
+		"message":   "背景移除成功",
+		"imageData": resultURL,  // base64 data URL 格式
+		"format":    "data_url", // 说明返回格式
 	})
 }
 
@@ -367,30 +371,24 @@ func removeBackgroundFromURL(imageURL string) (string, error) {
 	return imageURL, nil
 }
 
-// uploadProcessedImageToBlob 保存处理后的图片（简化版本）
+// uploadProcessedImageToBlob 转换图片数据为可访问格式
 func uploadProcessedImageToBlob(imageData []byte, filename string) (string, error) {
-	// 生成唯一的文件名
-	uniqueFilename := fmt.Sprintf("bg_removed_%d_%s", time.Now().Unix(), filename)
+	// 直接返回 base64 编码的数据URL
+	// 这样客户端可以直接使用，无需文件存储
+	base64Data := base64.StdEncoding.EncodeToString(imageData)
 
-	// 确保images目录存在
-	imagesDir := "./images"
-	if _, err := os.Stat(imagesDir); os.IsNotExist(err) {
-		err := os.MkdirAll(imagesDir, 0755)
-		if err != nil {
-			return "", fmt.Errorf("创建images目录失败: %v", err)
-		}
+	// 根据文件扩展名确定MIME类型
+	var mimeType string
+	if strings.HasSuffix(strings.ToLower(filename), ".png") {
+		mimeType = "image/png"
+	} else if strings.HasSuffix(strings.ToLower(filename), ".jpg") || strings.HasSuffix(strings.ToLower(filename), ".jpeg") {
+		mimeType = "image/jpeg"
+	} else {
+		mimeType = "image/png" // 默认为PNG
 	}
 
-	// 保存文件到本地
-	filePath := fmt.Sprintf("%s/%s", imagesDir, uniqueFilename)
-	err := os.WriteFile(filePath, imageData, 0644)
-	if err != nil {
-		return "", fmt.Errorf("保存文件失败: %v", err)
-	}
+	// 返回 data URL 格式
+	dataURL := fmt.Sprintf("data:%s;base64,%s", mimeType, base64Data)
 
-	// 构建访问URL（相对路径）
-	// 在实际部署时，这些文件可以通过Vercel的静态文件服务访问
-	imageURL := fmt.Sprintf("/images/%s", uniqueFilename)
-
-	return imageURL, nil
+	return dataURL, nil
 }
