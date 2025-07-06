@@ -367,84 +367,30 @@ func removeBackgroundFromURL(imageURL string) (string, error) {
 	return imageURL, nil
 }
 
-// uploadProcessedImageToBlob 上传处理后的图片到Vercel Blob Storage
+// uploadProcessedImageToBlob 保存处理后的图片（简化版本）
 func uploadProcessedImageToBlob(imageData []byte, filename string) (string, error) {
-	// 获取Vercel Blob Token
-	blobToken := os.Getenv("BLOB_READ_WRITE_TOKEN")
-	if blobToken == "" {
-		return "", fmt.Errorf("未配置Vercel Blob存储令牌")
-	}
-
 	// 生成唯一的文件名
 	uniqueFilename := fmt.Sprintf("bg_removed_%d_%s", time.Now().Unix(), filename)
 
-	// 准备上传数据
-	var requestBody bytes.Buffer
-	writer := multipart.NewWriter(&requestBody)
+	// 确保images目录存在
+	imagesDir := "./images"
+	if _, err := os.Stat(imagesDir); os.IsNotExist(err) {
+		err := os.MkdirAll(imagesDir, 0755)
+		if err != nil {
+			return "", fmt.Errorf("创建images目录失败: %v", err)
+		}
+	}
 
-	// 添加文件数据
-	part, err := writer.CreateFormFile("file", uniqueFilename)
+	// 保存文件到本地
+	filePath := fmt.Sprintf("%s/%s", imagesDir, uniqueFilename)
+	err := os.WriteFile(filePath, imageData, 0644)
 	if err != nil {
-		return "", fmt.Errorf("创建表单文件失败: %v", err)
+		return "", fmt.Errorf("保存文件失败: %v", err)
 	}
 
-	_, err = part.Write(imageData)
-	if err != nil {
-		return "", fmt.Errorf("写入文件数据失败: %v", err)
-	}
+	// 构建访问URL（相对路径）
+	// 在实际部署时，这些文件可以通过Vercel的静态文件服务访问
+	imageURL := fmt.Sprintf("/images/%s", uniqueFilename)
 
-	writer.Close()
-
-	// 构建上传URL - 这里需要你的实际Blob Store URL
-	// 格式通常是: https://[store-id].public.blob.vercel-storage.com/
-	// 在实际使用中，你需要从环境变量或配置中获取正确的URL
-	storeURL := os.Getenv("VERCEL_BLOB_STORE_URL")
-	if storeURL == "" {
-		return "", fmt.Errorf("未配置Vercel Blob存储URL")
-	}
-
-	// 创建HTTP请求
-	req, err := http.NewRequest("PUT", storeURL+"/"+uniqueFilename, &requestBody)
-	if err != nil {
-		return "", fmt.Errorf("创建上传请求失败: %v", err)
-	}
-
-	req.Header.Set("Authorization", "Bearer "+blobToken)
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-
-	// 发送请求
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("上传请求失败: %v", err)
-	}
-	defer resp.Body.Close()
-
-	// 检查响应状态
-	if resp.StatusCode != http.StatusOK {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("上传失败，状态码: %d, 响应: %s", resp.StatusCode, string(bodyBytes))
-	}
-
-	// 解析响应获取URL
-	var uploadResponse struct {
-		URL string `json:"url"`
-	}
-
-	var responseBody []byte
-	responseBody, err = io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("读取响应失败: %v", err)
-	}
-
-	err = json.Unmarshal(responseBody, &uploadResponse)
-	if err != nil {
-		return "", fmt.Errorf("解析响应失败: %v", err)
-	}
-
-	if uploadResponse.URL == "" {
-		return "", fmt.Errorf("上传响应中未包含URL")
-	}
-
-	return uploadResponse.URL, nil
+	return imageURL, nil
 }

@@ -11,6 +11,9 @@ func SetupRoutes(router *gin.Engine) {
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 
+	// 静态文件服务 - 为images目录提供静态文件访问
+	router.Static("/images", "./images")
+
 	// 定义路由组
 	api := router.Group("/api")
 	{

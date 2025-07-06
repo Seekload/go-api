@@ -52,13 +52,9 @@ curl -X POST \
 ```bash
 # Photoroom API密钥 - 从 https://www.photoroom.com/api 获取
 PHOTOROOM_API_KEY=your_photoroom_api_key_here
-
-# Vercel Blob存储令牌 - 在Vercel项目的Storage设置中创建
-BLOB_READ_WRITE_TOKEN=your_blob_token_here
-
-# Vercel Blob存储URL - 你的Blob Store的URL
-VERCEL_BLOB_STORE_URL=https://your-store-id.public.blob.vercel-storage.com
 ```
+
+**注意：** 当前版本使用简化的文件存储方式，处理后的图片将保存到项目的 `images` 目录中，无需配置 Vercel Blob Storage。
 
 #### 获取Photoroom API密钥
 1. 访问 [Photoroom API](https://www.photoroom.com/api)
@@ -66,11 +62,8 @@ VERCEL_BLOB_STORE_URL=https://your-store-id.public.blob.vercel-storage.com
 3. 在API控制台中创建新的API密钥
 4. 复制密钥并设置为环境变量
 
-#### 配置Vercel Blob Storage
-1. 在Vercel项目中进入Storage标签
-2. 创建新的Blob Store或使用现有的
-3. 复制Read-Write Token
-4. 记录Blob Store的URL（格式：https://store-id.public.blob.vercel-storage.com）
+#### 部署注意事项
+由于使用了简化的文件存储方式，图片将保存在项目的 `images` 目录中。Vercel 会自动为这个目录提供静态文件服务。
 
 ### 技术实现细节
 
@@ -78,7 +71,7 @@ VERCEL_BLOB_STORE_URL=https://your-store-id.public.blob.vercel-storage.com
 1. **接收请求**：支持文件上传或图片URL
 2. **调用Photoroom API**：使用multipart/form-data格式发送图片数据
 3. **处理响应**：接收处理后的图片数据
-4. **存储结果**：将处理后的图片上传到Vercel Blob Storage
+4. **存储结果**：将处理后的图片保存到本地images目录
 5. **返回URL**：返回可访问的图片URL
 
 #### 支持的图片格式
@@ -88,8 +81,8 @@ VERCEL_BLOB_STORE_URL=https://your-store-id.public.blob.vercel-storage.com
 
 #### 性能特点
 - **智能处理**：AI驱动的背景移除，效果优于传统方法
-- **全球CDN**：通过Vercel Blob Storage提供全球访问
-- **高可用性**：99.99%的可用性保证
+- **静态文件服务**：通过Vercel的静态文件服务提供图片访问
+- **简单部署**：无需额外的存储配置
 
 ### 错误处理
 
@@ -118,14 +111,12 @@ VERCEL_BLOB_STORE_URL=https://your-store-id.public.blob.vercel-storage.com
 ## 部署配置
 
 ### Vercel部署
-确保在Vercel项目设置中添加所有必需的环境变量：
+确保在Vercel项目设置中添加必需的环境变量：
 
 1. 进入Vercel项目设置
 2. 选择Environment Variables
 3. 添加以下变量：
    - `PHOTOROOM_API_KEY`
-   - `BLOB_READ_WRITE_TOKEN`
-   - `VERCEL_BLOB_STORE_URL`
 
 ### 本地开发
 ```bash
