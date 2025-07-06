@@ -25,6 +25,9 @@ func SetupRoutes(router *gin.Engine) {
 		// 图片上传路由
 		api.POST("/uploadImg", controllers.UploadImage)
 
+		// 背景移除路由
+		api.POST("/remove-background", controllers.RemoveBackground)
+
 		// 可以在这里添加更多路由组
 		// v1 := api.Group("/v1")
 		// {

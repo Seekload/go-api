@@ -1,0 +1,74 @@
+# Cursor Rules for Go API Project
+
+## 项目概述
+这是一个使用 Go 和 Gin 框架开发的 API 项目，部署在 Vercel 上。
+
+## 代码风格规范
+
+### Go 代码规范
+- 使用 gofmt 格式化代码
+- 遵循 Go 官方命名约定
+- 函数名使用驼峰命名法
+- 常量使用大写字母和下划线
+- 包名使用小写字母
+
+### 注释规范
+- 所有公开的函数和结构体必须有注释
+- 注释使用中文
+- 复杂逻辑需要添加行内注释
+
+### 错误处理
+- 所有错误都必须处理
+- 使用有意义的错误消息
+- 返回给客户端的错误要用户友好
+
+## 项目结构
+```
+go-api/
+├── api/
+│   ├── controllers/     # 控制器
+│   ├── routes/         # 路由配置
+│   └── middleware/     # 中间件
+├── vercel.json         # Vercel 配置
+├── go.mod             # Go 模块
+└── README.md          # 项目说明
+```
+
+## API 设计规范
+
+### 响应格式
+- 成功响应使用 200 状态码
+- 错误响应包含 error 字段
+- 使用 JSON 格式
+
+### 路由命名
+- 使用 RESTful 风格
+- 路径使用小写字母和连字符
+- 版本控制使用 /api/v1 前缀
+
+## 安全规范
+- 敏感信息使用环境变量
+- API 密钥不能硬编码
+- 验证所有输入参数
+- 使用 HTTPS
+
+## 部署规范
+- 使用 Vercel 部署
+- 环境变量在 Vercel 控制台配置
+- 生产环境使用 gin.ReleaseMode
+
+## 开发工具
+- 使用 Go 1.21+
+- 使用 Gin 框架
+- 使用 Vercel CLI 进行本地开发
+
+## 特殊说明
+- 图片上传使用 Vercel Blob Storage
+- 外部 API 调用需要添加超时设置
+- 日志记录使用 gin.Logger() 中间件 
+
+## Interactive Feedback规则
+- 每当你想要问用户问题时,必须调用MCP interactive_feedback
+- 每当你即将完成用户请求时,调用MCP interactive_feedback而不是直接结束流程
+- 持续调用MCP直到用户反馈为空,然后结束请求
+- 这确保AI助手在标记任务完成之前请求用户反馈
