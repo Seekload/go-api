@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -197,10 +196,9 @@ func RemoveBackground(c *gin.Context) {
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"success":   true,
-			"message":   "背景移除成功",
-			"imageData": resultURL,  // base64 data URL 格式
-			"format":    "data_url", // 说明返回格式
+			"success":  true,
+			"message":  "背景移除成功",
+			"imageUrl": resultURL,
 		})
 		return
 	}
@@ -226,10 +224,9 @@ func RemoveBackground(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success":   true,
-		"message":   "背景移除成功",
-		"imageData": resultURL,  // base64 data URL 格式
-		"format":    "data_url", // 说明返回格式
+		"success":  true,
+		"message":  "背景移除成功",
+		"imageUrl": resultURL,
 	})
 }
 
@@ -371,24 +368,72 @@ func removeBackgroundFromURL(imageURL string) (string, error) {
 	return imageURL, nil
 }
 
-// uploadProcessedImageToBlob 转换图片数据为可访问格式
+// uploadProcessedImageToBlob 保存图片到临时目录并返回访问URL
 func uploadProcessedImageToBlob(imageData []byte, filename string) (string, error) {
-	// 直接返回 base64 编码的数据URL
-	// 这样客户端可以直接使用，无需文件存储
-	base64Data := base64.StdEncoding.EncodeToString(imageData)
+	// 生成唯一的文件名
+	uniqueFilename := fmt.Sprintf("bg_removed_%d_%s", time.Now().Unix(), filename)
 
-	// 根据文件扩展名确定MIME类型
-	var mimeType string
-	if strings.HasSuffix(strings.ToLower(filename), ".png") {
-		mimeType = "image/png"
-	} else if strings.HasSuffix(strings.ToLower(filename), ".jpg") || strings.HasSuffix(strings.ToLower(filename), ".jpeg") {
-		mimeType = "image/jpeg"
-	} else {
-		mimeType = "image/png" // 默认为PNG
+	// 保存到 /tmp 目录
+	tmpPath := fmt.Sprintf("/tmp/%s", uniqueFilename)
+	err := os.WriteFile(tmpPath, imageData, 0644)
+	if err != nil {
+		return "", fmt.Errorf("保存文件到临时目录失败: %v", err)
 	}
 
-	// 返回 data URL 格式
-	dataURL := fmt.Sprintf("data:%s;base64,%s", mimeType, base64Data)
+	// 返回访问URL
+	imageURL := fmt.Sprintf("/api/temp-image/%s", uniqueFilename)
 
-	return dataURL, nil
+	return imageURL, nil
+}
+
+// ServeTempImage 提供临时图片文件访问
+func ServeTempImage(c *gin.Context) {
+	filename := c.Param("filename")
+	if filename == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "文件名不能为空",
+		})
+		return
+	}
+
+	// 构建文件路径
+	filePath := fmt.Sprintf("/tmp/%s", filename)
+
+	// 检查文件是否存在
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		c.JSON(http.StatusNotFound, gin.H{
+			"success": false,
+			"message": "文件不存在或已过期",
+		})
+		return
+	}
+
+	// 读取文件
+	fileData, err := os.ReadFile(filePath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "读取文件失败",
+		})
+		return
+	}
+
+	// 根据文件扩展名设置Content-Type
+	var contentType string
+	if strings.HasSuffix(strings.ToLower(filename), ".png") {
+		contentType = "image/png"
+	} else if strings.HasSuffix(strings.ToLower(filename), ".jpg") || strings.HasSuffix(strings.ToLower(filename), ".jpeg") {
+		contentType = "image/jpeg"
+	} else {
+		contentType = "image/png" // 默认为PNG
+	}
+
+	// 设置响应头
+	c.Header("Content-Type", contentType)
+	c.Header("Content-Length", fmt.Sprintf("%d", len(fileData)))
+	c.Header("Cache-Control", "public, max-age=3600") // 缓存1小时
+
+	// 返回文件数据
+	c.Data(http.StatusOK, contentType, fileData)
 }

@@ -31,6 +31,9 @@ func SetupRoutes(router *gin.Engine) {
 		// 背景移除路由
 		api.POST("/remove-background", controllers.RemoveBackground)
 
+		// 临时图片访问路由
+		api.GET("/temp-image/:filename", controllers.ServeTempImage)
+
 		// 可以在这里添加更多路由组
 		// v1 := api.Group("/v1")
 		// {
