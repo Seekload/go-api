@@ -30,6 +30,7 @@ type R2Client struct {
 
 // NewR2Client 创建新的R2客户端
 func NewR2Client() (*R2Client, error) {
+	// 首先尝试从环境变量获取
 	cfg := &R2Config{
 		AccountID:       os.Getenv("R2_ACCOUNT_ID"),
 		AccessKeyID:     os.Getenv("R2_ACCESS_KEY_ID"),
@@ -37,9 +38,23 @@ func NewR2Client() (*R2Client, error) {
 		BucketName:      os.Getenv("R2_BUCKET_NAME"),
 	}
 
-	// 验证必需的环境变量
+	// 如果环境变量为空，使用后备配置（临时测试用）
+	if cfg.AccountID == "" {
+		cfg.AccountID = "26379ecc1c2197c01415225f363142cd"
+	}
+	if cfg.AccessKeyID == "" {
+		cfg.AccessKeyID = "6e139acf5ddd677bb531ff21aab34e8a"
+	}
+	if cfg.SecretAccessKey == "" {
+		cfg.SecretAccessKey = "73f68cde9303ebbbd1107a74458f0e995ebc26bb399633a7c4087157f1cf5aa2"
+	}
+	if cfg.BucketName == "" {
+		cfg.BucketName = "my-image-bucket"
+	}
+
+	// 再次验证配置
 	if cfg.AccountID == "" || cfg.AccessKeyID == "" || cfg.SecretAccessKey == "" || cfg.BucketName == "" {
-		return nil, fmt.Errorf("缺少必需的R2环境变量: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME")
+		return nil, fmt.Errorf("R2配置无效")
 	}
 
 	// 创建AWS配置
@@ -97,8 +112,12 @@ func (r2 *R2Client) buildPublicURL(filename string) string {
 	}
 
 	// 检查是否配置了R2的公开访问域名
-	r2PublicDomain := "https://pub-3ffcf1af7843496cb99d2b6a4d42645b.r2.dev"
+	r2PublicDomain := os.Getenv("R2_DEV_DOMAIN")
 	if r2PublicDomain != "" {
+		// 如果已经包含 https://，直接使用；否则添加
+		if strings.HasPrefix(r2PublicDomain, "https://") {
+			return fmt.Sprintf("%s/%s", r2PublicDomain, filename)
+		}
 		return fmt.Sprintf("https://%s/%s", r2PublicDomain, filename)
 	}
 
