@@ -1,0 +1,23 @@
+# 复制此文件为 .env.local 并填入你的实际配置
+
+# Cloudflare R2 配置
+R2_ACCOUNT_ID=26379eed2197d14155256365142cd
+R2_ACCESS_KEY_ID=your_r2_access_key_id_here
+R2_SECRET_ACCESS_KEY=your_r2_secret_access_key_here
+R2_BUCKET_NAME=my-image-bucket
+
+# === 公开访问URL配置（三选一） ===
+
+# 选项1：自定义域名（推荐）
+# 如果你在Cloudflare中配置了自定义域名，如 images.yourdomain.com
+# R2_PUBLIC_DOMAIN=images.yourdomain.com
+
+# 选项2：R2.dev 公开域名  
+# 当你启用公开访问后，Cloudflare会提供类似 pub-xxxxxx.r2.dev 的域名
+# R2_DEV_DOMAIN=pub-xxxxxx.r2.dev
+
+# 选项3：不配置任何公开域名
+# 如果不配置上述任何域名，系统会自动生成7天有效期的预签名URL
+
+# Photoroom API (用于背景移除功能)
+PHOTOROOM_API_KEY=your_photoroom_api_key_here 

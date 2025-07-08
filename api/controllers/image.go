@@ -8,7 +8,6 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -368,72 +367,19 @@ func removeBackgroundFromURL(imageURL string) (string, error) {
 	return imageURL, nil
 }
 
-// uploadProcessedImageToBlob 保存图片到临时目录并返回访问URL
+// uploadProcessedImageToBlob 上传图片到R2存储并返回访问URL
 func uploadProcessedImageToBlob(imageData []byte, filename string) (string, error) {
-	// 生成唯一的文件名
-	uniqueFilename := fmt.Sprintf("bg_removed_%d_%s", time.Now().Unix(), filename)
-
-	// 保存到 /tmp 目录
-	tmpPath := fmt.Sprintf("/tmp/%s", uniqueFilename)
-	err := os.WriteFile(tmpPath, imageData, 0644)
+	// 创建R2客户端
+	r2Client, err := NewR2Client()
 	if err != nil {
-		return "", fmt.Errorf("保存文件到临时目录失败: %v", err)
+		return "", fmt.Errorf("创建R2客户端失败: %v", err)
 	}
 
-	// 返回访问URL
-	imageURL := fmt.Sprintf("/api/temp-image/%s", uniqueFilename)
+	// 上传到R2
+	imageURL, err := r2Client.UploadImage(imageData, filename)
+	if err != nil {
+		return "", fmt.Errorf("上传到R2失败: %v", err)
+	}
 
 	return imageURL, nil
-}
-
-// ServeTempImage 提供临时图片文件访问
-func ServeTempImage(c *gin.Context) {
-	filename := c.Param("filename")
-	if filename == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": "文件名不能为空",
-		})
-		return
-	}
-
-	// 构建文件路径
-	filePath := fmt.Sprintf("/tmp/%s", filename)
-
-	// 检查文件是否存在
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		c.JSON(http.StatusNotFound, gin.H{
-			"success": false,
-			"message": "文件不存在或已过期",
-		})
-		return
-	}
-
-	// 读取文件
-	fileData, err := os.ReadFile(filePath)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"message": "读取文件失败",
-		})
-		return
-	}
-
-	// 根据文件扩展名设置Content-Type
-	var contentType string
-	if strings.HasSuffix(strings.ToLower(filename), ".png") {
-		contentType = "image/png"
-	} else if strings.HasSuffix(strings.ToLower(filename), ".jpg") || strings.HasSuffix(strings.ToLower(filename), ".jpeg") {
-		contentType = "image/jpeg"
-	} else {
-		contentType = "image/png" // 默认为PNG
-	}
-
-	// 设置响应头
-	c.Header("Content-Type", contentType)
-	c.Header("Content-Length", fmt.Sprintf("%d", len(fileData)))
-	c.Header("Cache-Control", "public, max-age=3600") // 缓存1小时
-
-	// 返回文件数据
-	c.Data(http.StatusOK, contentType, fileData)
 }

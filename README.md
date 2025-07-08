@@ -52,9 +52,15 @@ curl -X POST \
 ```bash
 # Photoroom API密钥 - 从 https://www.photoroom.com/api 获取
 PHOTOROOM_API_KEY=your_photoroom_api_key_here
+
+# Cloudflare R2 存储配置
+R2_ACCOUNT_ID=your_cloudflare_account_id
+R2_ACCESS_KEY_ID=your_r2_access_key_id
+R2_SECRET_ACCESS_KEY=your_r2_secret_access_key
+R2_BUCKET_NAME=your_r2_bucket_name
 ```
 
-**注意：** 当前版本使用简化的文件存储方式，处理后的图片将保存到项目的 `images` 目录中，无需配置 Vercel Blob Storage。
+**更新：** 现在使用 Cloudflare R2 对象存储来保存处理后的图片，提供更可靠和可扩展的文件存储解决方案。
 
 #### 获取Photoroom API密钥
 1. 访问 [Photoroom API](https://www.photoroom.com/api)
@@ -62,8 +68,32 @@ PHOTOROOM_API_KEY=your_photoroom_api_key_here
 3. 在API控制台中创建新的API密钥
 4. 复制密钥并设置为环境变量
 
+#### 配置Cloudflare R2存储
+1. **创建Cloudflare账户和R2存储桶**：
+   - 访问 [Cloudflare Dashboard](https://dash.cloudflare.com/)
+   - 导航到 "R2 Object Storage"
+   - 创建新的存储桶
+   - 记录存储桶名称
+
+2. **获取Account ID**：
+   - 在Cloudflare Dashboard右侧边栏可找到Account ID
+
+3. **创建R2 API令牌**：
+   - 进入 "My Profile" > "API Tokens"
+   - 点击 "Create Token" 
+   - 选择 "R2 Token" 模板
+   - 配置权限：Account - Cloudflare R2:Edit
+   - 保存Access Key ID和Secret Access Key
+
+4. **配置存储桶权限**（可选）：
+   - 如需公开访问，可在存储桶设置中配置CORS和公共访问权限
+
 #### 部署注意事项
-由于使用了简化的文件存储方式，图片将保存在项目的 `images` 目录中。Vercel 会自动为这个目录提供静态文件服务。
+处理后的图片将直接存储到Cloudflare R2对象存储中，提供：
+- **高可用性**：99.9%的可用性保证
+- **全球CDN**：通过Cloudflare全球网络加速访问
+- **成本效益**：R2存储成本比传统云存储便宜约90%
+- **S3兼容**：使用标准S3 API，便于迁移和集成
 
 ### 技术实现细节
 
@@ -71,8 +101,8 @@ PHOTOROOM_API_KEY=your_photoroom_api_key_here
 1. **接收请求**：支持文件上传或图片URL
 2. **调用Photoroom API**：使用multipart/form-data格式发送图片数据
 3. **处理响应**：接收处理后的图片数据
-4. **存储结果**：将处理后的图片保存到本地images目录
-5. **返回URL**：返回可访问的图片URL
+4. **存储结果**：将处理后的图片上传到Cloudflare R2对象存储
+5. **返回URL**：返回R2存储的公共访问URL
 
 #### 支持的图片格式
 - JPEG (.jpg, .jpeg)
@@ -81,8 +111,9 @@ PHOTOROOM_API_KEY=your_photoroom_api_key_here
 
 #### 性能特点
 - **智能处理**：AI驱动的背景移除，效果优于传统方法
-- **静态文件服务**：通过Vercel的静态文件服务提供图片访问
-- **简单部署**：无需额外的存储配置
+- **云存储**：使用Cloudflare R2提供高性能对象存储
+- **全球加速**：通过Cloudflare CDN实现全球快速访问
+- **可扩展性**：支持大规模文件存储，无容量限制
 
 ### 错误处理
 
@@ -117,6 +148,10 @@ PHOTOROOM_API_KEY=your_photoroom_api_key_here
 2. 选择Environment Variables
 3. 添加以下变量：
    - `PHOTOROOM_API_KEY`
+   - `R2_ACCOUNT_ID`
+   - `R2_ACCESS_KEY_ID`
+   - `R2_SECRET_ACCESS_KEY`
+   - `R2_BUCKET_NAME`
 
 ### 本地开发
 ```bash
