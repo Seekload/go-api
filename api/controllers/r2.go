@@ -38,20 +38,6 @@ func NewR2Client() (*R2Client, error) {
 		BucketName:      os.Getenv("R2_BUCKET_NAME"),
 	}
 
-	// 如果环境变量为空，使用后备配置（临时测试用）
-	if cfg.AccountID == "" {
-		cfg.AccountID = "26379ecc1c2197c01415225f363142cd"
-	}
-	if cfg.AccessKeyID == "" {
-		cfg.AccessKeyID = "6e139acf5ddd677bb531ff21aab34e8a"
-	}
-	if cfg.SecretAccessKey == "" {
-		cfg.SecretAccessKey = "73f68cde9303ebbbd1107a74458f0e995ebc26bb399633a7c4087157f1cf5aa2"
-	}
-	if cfg.BucketName == "" {
-		cfg.BucketName = "my-image-bucket"
-	}
-
 	// 再次验证配置
 	if cfg.AccountID == "" || cfg.AccessKeyID == "" || cfg.SecretAccessKey == "" || cfg.BucketName == "" {
 		return nil, fmt.Errorf("R2配置无效")

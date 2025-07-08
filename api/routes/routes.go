@@ -31,10 +31,6 @@ func SetupRoutes(router *gin.Engine) {
 		// 背景移除路由
 		api.POST("/remove-background", controllers.RemoveBackground)
 
-		// 调试路由（仅用于测试，生产环境请删除）
-		api.GET("/debug/env", controllers.DebugEnv)
-		api.GET("/debug/vercel-env", controllers.VercelEnvDebug)
-
 		// 可以在这里添加更多路由组
 		// v1 := api.Group("/v1")
 		// {
